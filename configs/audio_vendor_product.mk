@@ -1,3 +1,10 @@
+AUDIO_USE_STUB_HAL := false
+ifeq ($(TARGET_USES_QMAA),true)
+ifeq ($(TARGET_USES_QMAA_OVERRIDE_AUDIO), false)
+AUDIO_USE_STUB_HAL := true
+endif # TARGET_USES_QMAA_OVERRIDE_AUDIO
+endif # TARGET_USES_QMAA
+
 #MM_AUDIO product packages
 MM_AUDIO += audiod
 MM_AUDIO += libacdbloader
@@ -119,6 +126,9 @@ MM_AUDIO += QRD_Hdmi_cal.acdb
 MM_AUDIO += QRD_Headset_cal.acdb
 MM_AUDIO += QRD_Speaker_cal.acdb
 MM_AUDIO += QRD_workspaceFile.qwsp
+ifeq ($(TARGET_BOARD_PLATFORM),lahaina)
+MM_AUDIO += fai__4.8.8_0.0__3.0.0_0.0__3.1.2_0.0__3.2.0_0.1__eai_1.10.pmd
+endif
 ifeq ($(TARGET_BOARD_AUTO),true)
 MM_AUDIO += adsp_avs_config.acdb
 MM_AUDIO += Bluetooth_cal.acdb
@@ -131,6 +141,11 @@ MM_AUDIO += Headset_cal.acdb
 MM_AUDIO += Speaker_cal.acdb
 
 MM_AUDIO += libaudiohalplugin
+ifeq ($(call is-board-platform-in-list,gen4),true)
+MM_AUDIO += libaudio_dac
+MM_AUDIO += libaudio_expander
+MM_AUDIO += exp_dac_test
+endif #gen4
 MM_AUDIO += libcdcdriver
 MM_AUDIO += libvad
 MM_AUDIO += capi_v2_bmt
@@ -142,6 +157,7 @@ MM_AUDIO += capi_v2_synth
 MM_AUDIO += capi_v2_avc
 MM_AUDIO += capi_v2_asrc
 MM_AUDIO += capi_v2_ecmx
+MM_AUDIO += capi_v2_vote
 MM_AUDIO += icc_module.so.1
 MM_AUDIO += sec_module.so.1
 MM_AUDIO += audio-nxp-auto
@@ -155,6 +171,7 @@ MM_AUDIO += liba2bstack-protobuf
 MM_AUDIO += a2b-app
 MM_AUDIO += liba2bdriver
 MM_AUDIO += libacdbloaderclient
+MM_AUDIO += libacdbloadersocketclient
 MM_AUDIO += acdb_loader_service
 MM_AUDIO += libaudiohalpluginclient
 MM_AUDIO += audio_hal_plugin_service
@@ -167,7 +184,7 @@ MM_AUDIO += audcalparam_commands_elite.cfg
 MM_AUDIO += libsynth
 MM_AUDIO += libicc
 
-ifneq ( ,$(filter T Tiramisu 13, $(PLATFORM_VERSION)))
+ifneq ( ,$(filter T Tiramisu 13 U UpsideDownCake 14, $(PLATFORM_VERSION)))
 MM_AUDIO += vendor.qti.hardware.automotive.audiocontrol-service
 else
 MM_AUDIO += android.hardware.automotive.audiocontrol-service.example
@@ -216,10 +233,23 @@ TARGET_USES_AOSP_FOR_AUDIO := false
 endif
 
 # Audio configuration file
-ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX),msmnile_au)
+ifeq ($(AUDIO_USE_STUB_HAL),true)
+TARGET_USES_AOSP_FOR_AUDIO := true
+-include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/common/default.mk
+else
+ifeq ($(TARGET_GVMGH_SPECIFIC), false)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
-else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX),msmnile_gvmq)
+else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_km4)
+-include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
+else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX)$(TARGET_BOARD_DERIVATIVE_SUFFIX),msmnile_au_ar)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmnile_au/msmnile_au.mk
 else ifeq ($(TARGET_BOARD_PLATFORM)$(TARGET_BOARD_SUFFIX),sm6150_au)
 -include $(TOPDIR)vendor/qcom/opensource/audio-hal/primary-hal/configs/msmsteppe_au/msmsteppe_au.mk
+endif
+endif # AUDIO_USE_STUB_HAL
+
+ifeq ($(TARGET_BOARD_AUTO),true)
+ifeq ($(TARGET_USES_RRO),true)
+PRODUCT_PACKAGES += CarServiceResAutoTarget_Vendor
+endif
 endif
